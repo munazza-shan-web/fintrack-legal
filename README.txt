@@ -1,65 +1,53 @@
-# FinTrack — Legal & Support
+# 💚 FinTrack — Legal & Support
 
 <p align="center">
-  <strong>Plan · Save · Grow</strong>
+  <img src="https://img.shields.io/badge/FinTrack-Plan%20%7C%20Save%20%7C%20Grow-16A34A?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Android%20%7C%20iOS-Available-0D9488?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Price-Free-2563EB?style=for-the-badge" />
 </p>
 
 <p align="center">
-  Official legal information and support website for the FinTrack mobile application.
+  <strong>Take control of your savings. Build better financial habits.</strong>
 </p>
 
 ---
 
 ## 🌿 About FinTrack
 
-FinTrack helps users organize their savings goals, record contributions, and track their financial progress.
+FinTrack is a personal savings and financial tracking application designed to help users organize their savings goals, record contributions, monitor progress, and stay focused on their financial goals.
 
-This repository contains the official legal and support pages for the FinTrack application.
+**Plan smarter. Save consistently. Grow confidently.**
 
-## 📄 Legal Documents
+## 📑 Legal Documents
 
 | Document | Description |
-|---|---|
-| Privacy Policy | Explains how the app handles user information and privacy. |
-| Terms & Conditions | Describes the terms governing the use of FinTrack. |
+|:---|:---|
+| 🟢 [Privacy Policy](privacy-policy.html) | Information about privacy and user data. |
+| 🔵 [Terms & Conditions](terms-and-conditions.html) | Rules and conditions for using FinTrack. |
 
-## 🌐 Website
+## 📱 Application Information
 
-**Live Website:**  
-https://munazza-shan-web.github.io/fintrack-legal/
+<p>
+  <img src="https://img.shields.io/badge/Application-FinTrack-16A34A?style=flat-square" />
+  <img src="https://img.shields.io/badge/Platforms-Android%20%7C%20iOS-0D9488?style=flat-square" />
+  <img src="https://img.shields.io/badge/Availability-Worldwide-2563EB?style=flat-square" />
+  <img src="https://img.shields.io/badge/Cost-Completely%20Free-16A34A?style=flat-square" />
+</p>
 
-## 📁 Repository Structure
+## 💬 Support & Contact
 
-```text
-fintrack-legal/
-│
-├── index.html
-├── privacy-policy.html
-├── terms-and-conditions.html
-└── README.md
-```
+Have a question, need assistance, or want to submit a privacy-related request?
 
-## 📬 Contact & Support
+📧 **Email:** [munazzashan99@gmail.com](mailto:munazzashan99@gmail.com)
 
-For questions, support, or privacy-related requests:
-
-**Email:** munazzashan99@gmail.com
-
-## 🚀 Deployment
-
-This website is hosted using **GitHub Pages**.
-
-To deploy:
-
-1. Open repository Settings.
-2. Navigate to Pages.
-3. Select **Deploy from a branch**.
-4. Choose the `main` branch.
-5. Select the `/ (root)` folder.
-6. Click Save.
+---
 
 <p align="center">
-  Made for FinTrack 💚
-  <br>
-  <strong>Plan · Save · Grow</strong>
+  <strong>💚 FinTrack</strong>
+  <br/>
+  <em>Plan · Save · Grow</em>
+  <br/><br/>
+  <img src="https://img.shields.io/badge/Made%20for%20Better%20Financial%20Habits-16A34A?style=flat-square" />
+  <br/><br/>
+  © 2026 FinTrack. All rights reserved.
 </p>
