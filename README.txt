@@ -58,14 +58,6 @@ To deploy:
 5. Select the `/ (root)` folder.
 6. Click Save.
 
-## 🛠️ Built With
-
-- HTML5
-- CSS3
-- GitHub Pages
-
----
-
 <p align="center">
   Made for FinTrack 💚
   <br>
