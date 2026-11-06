@@ -173,7 +173,7 @@ class SettingsPage extends StatelessWidget {
           const SizedBox(height: 24),
           CupertinoListSection.insetGrouped(
             margin: EdgeInsets.zero,
-            header: Text(t(c, 'About Save Goals')),
+            header: Text(t(c, 'About Savings Goals')),
             children: [
               CupertinoListTile.notched(
                 title: Text(t(c, 'Privacy Policy')),

@@ -1,4 +1,3 @@
-
 class SavingsGoal {
   final int? id;
   final String name;
@@ -29,8 +28,7 @@ class SavingsGoal {
 
   bool get isCompleted => savedAmount >= targetAmount;
 
-  bool get isOverdue =>
-      !isCompleted && deadline.isBefore(DateTime.now());
+  bool get isOverdue => !isCompleted && deadline.isBefore(DateTime.now());
 
   Map<String, dynamic> toMap() {
     return {

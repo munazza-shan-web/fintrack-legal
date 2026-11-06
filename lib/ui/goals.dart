@@ -10,6 +10,21 @@ class GoalTile extends StatelessWidget {
       padding: EdgeInsets.zero,
       onPressed: () => openPage(c, GoalDetail(goal)),
       child: Panel(
+        color: goal.progress >= .75
+            ? CupertinoDynamicColor.resolve(
+                const CupertinoDynamicColor.withBrightness(
+                  color: Color(0xFFE2F3C9),
+                  darkColor: Color(0xFF20351B),
+                ),
+                c,
+              )
+            : CupertinoDynamicColor.resolve(
+                const CupertinoDynamicColor.withBrightness(
+                  color: Color(0xFFEBE4F6),
+                  darkColor: Color(0xFF2A2435),
+                ),
+                c,
+              ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -327,6 +342,11 @@ class GoalDetail extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 20),
+          PrimaryButton(
+            'Share your progress',
+            onPressed: () => openPage(c, ProgressSharePage(goal)),
           ),
           const Section('Goal activity'),
           if (transactions.isEmpty)

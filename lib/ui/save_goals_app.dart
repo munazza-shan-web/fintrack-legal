@@ -1,11 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart';
+import 'dart:ui' as ui;
+import 'package:share_plus/share_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/savings_goal.dart';
 import '../models/savings_plan.dart';
+import '../models/saving_insights.dart';
 import '../models/savings_transaction.dart';
 import '../providers/app_settings.dart';
 import '../utils/app_brand.dart';
@@ -17,6 +21,7 @@ part 'goals.dart';
 part 'goal_forms.dart';
 part 'activity.dart';
 part 'settings.dart';
+part 'progress_share.dart';
 
 const lime = Color(0xFF9FE870);
 const forest = Color(0xFF163300);
@@ -74,8 +79,29 @@ class SaveGoalsApp extends StatelessWidget {
         scaffoldBackgroundColor: CupertinoColors.systemGroupedBackground,
         textTheme: const CupertinoTextThemeData(
           primaryColor: accent,
+          textStyle: TextStyle(
+            fontFamily: 'SavingsSans',
+            fontSize: 17,
+            color: CupertinoColors.label,
+          ),
+          actionTextStyle: TextStyle(
+            fontFamily: 'SavingsSans',
+            fontSize: 17,
+            color: accent,
+          ),
+          tabLabelTextStyle: TextStyle(
+            fontFamily: 'SavingsSans',
+            fontSize: 11,
+            color: CupertinoColors.secondaryLabel,
+          ),
+          navTitleTextStyle: TextStyle(
+            fontFamily: 'SavingsSans',
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: CupertinoColors.label,
+          ),
           navLargeTitleTextStyle: TextStyle(
-            fontFamily: 'CupertinoSystemDisplay',
+            fontFamily: 'SavingsSans',
             color: CupertinoColors.label,
             fontSize: 34,
             fontWeight: FontWeight.w700,
@@ -85,9 +111,28 @@ class SaveGoalsApp extends StatelessWidget {
       ),
       builder: (context, child) => _AppLanguage(
         code: settings.languageCode,
-        child: Directionality(
-          textDirection: AppLocalizations(settings.languageCode).textDirection,
-          child: child ?? const SizedBox.shrink(),
+        child: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            statusBarColor: const Color(0x00000000),
+            statusBarIconBrightness: settings.themeMode == ThemeMode.dark
+                ? Brightness.light
+                : Brightness.dark,
+            statusBarBrightness: settings.themeMode == ThemeMode.dark
+                ? Brightness.dark
+                : Brightness.light,
+            systemNavigationBarColor: const Color(0x00000000),
+            systemNavigationBarIconBrightness:
+                settings.themeMode == ThemeMode.dark
+                ? Brightness.light
+                : Brightness.dark,
+            systemNavigationBarContrastEnforced: false,
+          ),
+          child: Directionality(
+            textDirection: AppLocalizations(
+              settings.languageCode,
+            ).textDirection,
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
       ),
       home: const MainScreen(),
@@ -202,31 +247,47 @@ class PageShell extends StatelessWidget {
   @override
   Widget build(BuildContext c) => CupertinoPageScaffold(
     backgroundColor: canvas(c),
-    child: CustomScrollView(
-      slivers: [
-        CupertinoSliverNavigationBar(
-          largeTitle: Text(t(c, title)),
-          previousPageTitle: t(c, 'Back'),
-          trailing: trailing,
-          backgroundColor: canvas(c),
-          border: null,
-        ),
-        SliverToBoxAdapter(
-          child: SafeArea(
-            top: false,
-            bottom: true,
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 680),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-                  child: child,
+    child: SafeArea(
+      bottom: false,
+      child: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: Row(
+                children: [
+                  if (Navigator.of(c).canPop())
+                    CupertinoButton(
+                      padding: const EdgeInsetsDirectional.only(end: 12),
+                      onPressed: () => Navigator.pop(c),
+                      child: Icon(
+                        CupertinoIcons.back,
+                        semanticLabel: t(c, 'Back'),
+                      ),
+                    ),
+                  Expanded(child: Text(t(c, title), style: headline(c, 28))),
+                  ?trailing,
+                ],
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: SafeArea(
+              top: false,
+              bottom: true,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 680),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                    child: child,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     ),
   );
 }
@@ -345,17 +406,24 @@ class ProgressTrack extends StatelessWidget {
   @override
   Widget build(BuildContext c) => Semantics(
     label: '${(value * 100).round()}%',
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        height: 7,
-        color: onGreen
-            ? forest.withValues(alpha: .14)
-            : CupertinoColors.systemFill.resolveFrom(c),
-        alignment: AlignmentDirectional.centerStart,
-        child: FractionallySizedBox(
-          widthFactor: value.clamp(0, 1),
-          child: Container(color: onGreen ? forest : accent.resolveFrom(c)),
+    child: TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: value.clamp(0, 1)),
+      duration: MediaQuery.disableAnimationsOf(c)
+          ? Duration.zero
+          : const Duration(milliseconds: 650),
+      curve: Curves.easeOutCubic,
+      builder: (_, v, child) => ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          height: 8,
+          color: onGreen
+              ? forest.withValues(alpha: .14)
+              : CupertinoColors.systemFill.resolveFrom(c),
+          alignment: AlignmentDirectional.centerStart,
+          child: FractionallySizedBox(
+            widthFactor: v.clamp(0, 1),
+            child: Container(color: onGreen ? forest : accent.resolveFrom(c)),
+          ),
         ),
       ),
     ),
@@ -439,7 +507,12 @@ class HomePage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const AppHeader(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 18),
+          MomentumHeader(
+            insights: SavingInsights(vm.transactions),
+            progress: vm.overallProgress,
+          ),
+          const SizedBox(height: 18),
           Panel(
             color: lime,
             child: Column(

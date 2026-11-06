@@ -1,8 +1,4 @@
-
-enum TransactionType {
-  deposit,
-  withdrawal,
-}
+enum TransactionType { deposit, withdrawal }
 
 class SavingsTransaction {
   final int? id;

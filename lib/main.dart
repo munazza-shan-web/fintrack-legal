@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_settings.dart';
 import 'services/notification_service.dart';
@@ -8,6 +9,7 @@ export 'ui/save_goals_app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   final settings = AppSettings();
   await settings.loadSettings();
   try {

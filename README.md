@@ -1,4 +1,4 @@
-# Save Goals
+# Savings Goals
 
 A 100% free personal savings tracker, built as a nonprofit initiative for **AILANGA SCHOOL PROJECT**. Public website: **SaveGoals.site**.
 
@@ -52,3 +52,15 @@ Include `assets/store-badges/` and `assets/screenshots/home-screen.png` when upl
 Run `python tools/package_site.py` after editing the website sources. The generated pages in `output/save-goals-website/` embed their stylesheet and images, avoiding missing relative assets and stale external styles after upload. Upload the generated `index.html`, `privacy-policy.html`, and `terms-and-conditions.html` together to your public web root, replacing the old pages. The editable root sources still use ordinary CSS and image files.
 
 The packaged landing page was checked in a browser at 320, 375, 390, 680, 768, 1024 and 1440 pixels, with no horizontal overflow or broken images. Both legal pages were also checked at 320 pixels. The live domain could not be verified because DNS resolution for savegoals.site failed from this machine; no hosted files were modified.
+
+## Savings Goals 1.2
+
+Savings Goals uses shared Flutter layout and bundled fonts on Android and iOS,
+with explicit status-bar contrast and safe-area padding. Animated progress and an
+original sprout companion honor reduced-motion settings. Real deposit dates power
+the saving streak and seven-day strip.
+
+Goal details include an optional progress-card preview and native image sharing.
+Amounts, transaction dates and notes are excluded; goal names are opt-in. Read
+MAC_SETUP.md for cross-platform and native-sharing checks. No automatic posting,
+accounts, subscriptions or advertising are included.

@@ -115,7 +115,7 @@ class NotificationService {
 
     await _notifications.zonedSchedule(
       id: _reminderId,
-      title: isUrdu ? 'بچت کی یاد دہانی' : 'Save Goals Reminder',
+      title: isUrdu ? 'بچت کی یاد دہانی' : 'Savings Goals Reminder',
       body: isUrdu
           ? 'آج اپنی بچت کے ہدف میں رقم جمع کرنا نہ بھولیں!'
           : 'Remember to contribute towards your savings goal today!',

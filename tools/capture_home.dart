@@ -59,6 +59,7 @@ void main() {
     await tester.runAsync(() async {
       for (final family in [
         'Roboto',
+        'SavingsSans',
         'CupertinoSystemText',
         'CupertinoSystemDisplay',
       ]) {
@@ -108,6 +109,14 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    if (const bool.fromEnvironment('CAPTURE_SHARE')) {
+      final context = tester.element(find.byType(HomePage));
+      openPage(
+        context,
+        ProgressSharePage(context.read<GoalsViewModel>().goals.first),
+      );
+      await tester.pumpAndSettle();
+    }
     if (const bool.fromEnvironment('CAPTURE_GOAL')) {
       final context = tester.element(find.byType(HomePage));
       openPage(context, GoalDetail(context.read<GoalsViewModel>().goals.first));

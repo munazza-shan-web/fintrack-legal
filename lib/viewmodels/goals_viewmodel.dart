@@ -1,4 +1,3 @@
-
 import 'package:flutter/foundation.dart';
 
 import '../models/savings_goal.dart';
@@ -15,8 +14,7 @@ class GoalsViewModel extends ChangeNotifier {
   String? _error;
 
   List<SavingsGoal> get goals => List.unmodifiable(_goals);
-  List<SavingsTransaction> get transactions =>
-      List.unmodifiable(_transactions);
+  List<SavingsTransaction> get transactions => List.unmodifiable(_transactions);
 
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -32,8 +30,7 @@ class GoalsViewModel extends ChangeNotifier {
 
   int get activeGoals => _goals.where((goal) => !goal.isCompleted).length;
 
-  int get completedGoals =>
-      _goals.where((goal) => goal.isCompleted).length;
+  int get completedGoals => _goals.where((goal) => goal.isCompleted).length;
 
   double get overallProgress {
     if (totalTarget <= 0) return 0;

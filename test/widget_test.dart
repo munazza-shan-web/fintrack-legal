@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -146,6 +147,78 @@ SavingsGoal example({double saved = 200}) => SavingsGoal(
 );
 
 void main() {
+  for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+    testWidgets(
+      'Platform parity ${platform.name}',
+      (tester) async {
+        await mount(tester, MemoryGoals()..records.add(example()), width: 390);
+        tester.view.padding = const FakeViewPadding(top: 44, bottom: 34);
+        addTearDown(tester.view.resetPadding);
+        await tester.pumpAndSettle();
+        expect(
+          tester.getTopLeft(find.text('Overview')).dy,
+          greaterThanOrEqualTo(44),
+        );
+        expect(find.text('Savings Goals'), findsOneWidget);
+        expect(find.byType(MomentumHeader), findsOneWidget);
+        await goTab(tester, CupertinoIcons.flag);
+        expect(find.byType(GoalTile), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+      variant: TargetPlatformVariant({platform}),
+    );
+  }
+  testWidgets(
+    'Share card excludes financial details and defaults to anonymous',
+    (tester) async {
+      final goal = example(saved: 600);
+      final vm = MemoryGoals()..records.add(goal);
+      await mount(tester, vm, width: 320);
+      openPage(tester.element(find.byType(HomePage)), ProgressSharePage(goal));
+      await tester.pumpAndSettle();
+      final card = find.byType(AchievementCard);
+      expect(
+        find.descendant(of: card, matching: find.text('My course')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: card, matching: find.textContaining('600')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: card, matching: find.text('60%')),
+        findsOneWidget,
+      );
+      await tester.ensureVisible(find.byType(CupertinoSwitch));
+      await tester.tap(find.byType(CupertinoSwitch));
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(of: card, matching: find.text('My course')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets('Safe area and status icons follow the selected theme', (
+    tester,
+  ) async {
+    await mount(tester, MemoryGoals(), width: 320, theme: ThemeMode.dark);
+    tester.view.padding = const FakeViewPadding(top: 44, bottom: 34);
+    addTearDown(tester.view.resetPadding);
+    await tester.pumpAndSettle();
+    expect(
+      tester.getTopLeft(find.text('Overview')).dy,
+      greaterThanOrEqualTo(44),
+    );
+    final regions = tester.widgetList<AnnotatedRegion<SystemUiOverlayStyle>>(
+      find.byType(AnnotatedRegion<SystemUiOverlayStyle>),
+    );
+    expect(
+      regions.any((r) => r.value.statusBarIconBrightness == Brightness.light),
+      isTrue,
+    );
+    expect(tester.takeException(), isNull);
+  });
   for (final width in [320.0, 390.0]) {
     for (final mode in [ThemeMode.light, ThemeMode.dark]) {
       for (final language in ['en', 'ur']) {

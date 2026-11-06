@@ -1,4 +1,3 @@
-
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -75,10 +74,7 @@ class DatabaseService {
   Future<List<SavingsGoal>> getGoals() async {
     final db = await database;
 
-    final results = await db.query(
-      'savings_goals',
-      orderBy: 'created_at DESC',
-    );
+    final results = await db.query('savings_goals', orderBy: 'created_at DESC');
 
     return results.map(SavingsGoal.fromMap).toList();
   }
@@ -119,11 +115,7 @@ class DatabaseService {
   Future<int> deleteGoal(int id) async {
     final db = await database;
 
-    return db.delete(
-      'savings_goals',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return db.delete('savings_goals', where: 'id = ?', whereArgs: [id]);
   }
 
   // -----------------------------
@@ -138,9 +130,7 @@ class DatabaseService {
     DateTime? date,
   }) async {
     if (!amount.isFinite || amount <= 0) {
-      throw ArgumentError(
-        'Amount must be a valid number greater than zero.',
-      );
+      throw ArgumentError('Amount must be a valid number greater than zero.');
     }
 
     final db = await database;
@@ -158,8 +148,8 @@ class DatabaseService {
         throw Exception('Savings goal not found.');
       }
 
-      final currentSaved =
-          (goalResults.first['saved_amount'] as num).toDouble();
+      final currentSaved = (goalResults.first['saved_amount'] as num)
+          .toDouble();
 
       late double updatedSaved;
 
@@ -167,9 +157,7 @@ class DatabaseService {
         updatedSaved = currentSaved + amount;
       } else if (type == TransactionType.withdrawal) {
         if (amount > currentSaved) {
-          throw Exception(
-            'Withdrawal cannot exceed the saved amount.',
-          );
+          throw Exception('Withdrawal cannot exceed the saved amount.');
         }
 
         updatedSaved = currentSaved - amount;
@@ -195,10 +183,7 @@ class DatabaseService {
       final transactionMap = savingsTransaction.toMap();
       transactionMap.remove('id');
 
-      return txn.insert(
-        'savings_transactions',
-        transactionMap,
-      );
+      return txn.insert('savings_transactions', transactionMap);
     });
   }
 
@@ -213,9 +198,7 @@ class DatabaseService {
     return results.map(SavingsTransaction.fromMap).toList();
   }
 
-  Future<List<SavingsTransaction>> getTransactionsForGoal(
-    int goalId,
-  ) async {
+  Future<List<SavingsTransaction>> getTransactionsForGoal(int goalId) async {
     final db = await database;
 
     final results = await db.query(
@@ -241,8 +224,7 @@ class DatabaseService {
 
       if (results.isEmpty) return 0;
 
-      final savingsTransaction =
-          SavingsTransaction.fromMap(results.first);
+      final savingsTransaction = SavingsTransaction.fromMap(results.first);
 
       final goalResults = await txn.query(
         'savings_goals',
@@ -256,8 +238,8 @@ class DatabaseService {
         throw Exception('Savings goal not found.');
       }
 
-      final currentSaved =
-          (goalResults.first['saved_amount'] as num).toDouble();
+      final currentSaved = (goalResults.first['saved_amount'] as num)
+          .toDouble();
 
       late double updatedSaved;
 

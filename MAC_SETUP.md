@@ -1,4 +1,4 @@
-# Run Save Goals on your Mac
+# Run Savings Goals on your Mac
 
 The app now uses Cupertino screens, iOS navigation, grouped settings, date
 pickers and light/dark appearance. The green identity and selected logo remain.
@@ -89,3 +89,27 @@ was performed on Windows.
 The landing page retains its previous screenshot until you approve new device
 screenshots. `tools/capture_home.dart` can render a development preview with
 example goals; this is not an App Store device screenshot.
+
+## Savings Goals 1.2 design and sharing checks
+
+The app name is Savings Goals; platform IDs and the local database remain unchanged.
+Both platforms use the bundled SavingsSans font and the same header/card widgets.
+The root applies explicit light/dark system-bar icon styles, and page content uses
+one SafeArea around the scroll view. Validate real notch/camera-cutout devices,
+Android gesture/three-button navigation, keyboard resizing and iPad split views.
+
+The original animated sprout grows with aggregate progress. Tap it to replay its
+spring animation. Animations honor the operating system's reduced-motion setting.
+The seven-day strip and streak derive only from dated deposits; opening the app,
+withdrawals and future entries do not generate streak days.
+
+Open a goal → Share your progress. The preview excludes amounts, transaction
+notes and dates. Goal names are off by default and can be opted in. The Share
+progress card button opens the native Android/iOS share sheet with a PNG and a
+short caption. The user selects a destination and sends it themselves. Verify
+this on the Android phone and on iPhone/iPad; app-specific target behavior depends
+on installed sharing apps. No social login or automatic posting was added.
+
+Visual reference: https://play.google.com/store/apps/details?id=me.pocketpal.app&hl=en
+Reference screenshots were inspected for colour hierarchy and playful visual
+feedback; no competitor assets are included in the app.
