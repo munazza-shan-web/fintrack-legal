@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,7 +14,7 @@ class AppSettings extends ChangeNotifier {
 
   String _currencyCode = 'PKR';
   String _languageCode = 'en';
-  ThemeMode _themeMode = ThemeMode.dark;
+  ThemeMode _themeMode = ThemeMode.light;
   bool _hideBalances = false;
   bool _remindersEnabled = false;
   int _reminderHour = 20;
@@ -54,9 +53,8 @@ class AppSettings extends ChangeNotifier {
     _currencyCode = prefs.getString(_currencyKey) ?? 'PKR';
     _languageCode = prefs.getString(_languageKey) ?? 'en';
 
-    final savedTheme = prefs.getString(_themeKey) ?? 'dark';
-    _themeMode =
-        savedTheme == 'light' ? ThemeMode.light : ThemeMode.dark;
+    final savedTheme = prefs.getString(_themeKey) ?? 'light';
+    _themeMode = savedTheme == 'light' ? ThemeMode.light : ThemeMode.dark;
 
     _hideBalances = prefs.getBool(_privacyKey) ?? false;
     _remindersEnabled = prefs.getBool(_reminderKey) ?? false;

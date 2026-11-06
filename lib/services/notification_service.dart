@@ -34,9 +34,7 @@ class NotificationService {
       ),
     );
 
-    await _notifications.initialize(
-      settings: initializationSettings,
-    );
+    await _notifications.initialize(settings: initializationSettings);
 
     _initialized = true;
   }
@@ -44,8 +42,10 @@ class NotificationService {
   Future<bool> requestPermission() async {
     await initialize();
 
-    final ios = _notifications.resolvePlatformSpecificImplementation<
-        IOSFlutterLocalNotificationsPlugin>();
+    final ios = _notifications
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
 
     if (ios != null) {
       return await ios.requestPermissions(
@@ -56,8 +56,10 @@ class NotificationService {
           false;
     }
 
-    final android = _notifications.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final android = _notifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
 
     if (android != null) {
       return await android.requestNotificationsPermission() ?? true;
@@ -113,7 +115,7 @@ class NotificationService {
 
     await _notifications.zonedSchedule(
       id: _reminderId,
-      title: isUrdu ? 'بچت کی یاد دہانی' : 'FinTrack Reminder',
+      title: isUrdu ? 'بچت کی یاد دہانی' : 'Save Goals Reminder',
       body: isUrdu
           ? 'آج اپنی بچت کے ہدف میں رقم جمع کرنا نہ بھولیں!'
           : 'Remember to contribute towards your savings goal today!',
