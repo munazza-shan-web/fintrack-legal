@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 class AppLocalizations {
@@ -185,8 +184,7 @@ class AppLocalizations {
       'Delete Goal': 'ہدف حذف کریں',
       'Are you sure you want to delete this goal?':
           'کیا آپ واقعی یہ ہدف حذف کرنا چاہتے ہیں؟',
-      'This action cannot be undone.':
-          'یہ عمل واپس نہیں کیا جا سکتا۔',
+      'This action cannot be undone.': 'یہ عمل واپس نہیں کیا جا سکتا۔',
       'Add Deposit': 'رقم جمع کریں',
       'Add Withdrawal': 'رقم نکالیں',
       'Amount': 'رقم',
@@ -213,8 +211,7 @@ class AppLocalizations {
       'Daily Reminder': 'روزانہ یاد دہانی',
       'Enable Reminders': 'یاد دہانیاں فعال کریں',
       'Choose reminder time': 'یاد دہانی کا وقت منتخب کریں',
-      'Notifications permission is required':
-          'نوٹیفکیشن کی اجازت ضروری ہے',
+      'Notifications permission is required': 'نوٹیفکیشن کی اجازت ضروری ہے',
       'Reminder enabled': 'یاد دہانی فعال ہو گئی',
       'Reminder disabled': 'یاد دہانی بند ہو گئی',
       'Select Currency': 'کرنسی منتخب کریں',

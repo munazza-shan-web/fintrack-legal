@@ -8,7 +8,7 @@ import UserNotifications
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    // Lets FinTrack reminders show while the app is open
+    // Lets Save Goals reminders show while the app is open
     UNUserNotificationCenter.current().delegate = self
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)

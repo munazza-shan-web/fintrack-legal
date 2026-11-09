@@ -1,0 +1,21 @@
+// Retain the earlier concepts and generate a separate green-focused comparison.
+import fs from 'node:fs';
+import {pathToFileURL} from 'node:url';
+const directions=[
+ ['A','Clear purpose',`body{background:#a3e86c}h1{top:65px;left:35px;right:35px;font-size:68px;line-height:1.08;letter-spacing:-3px;text-align:center}h1 em{font-style:normal;color:#163300}.phone{top:350px;left:88px;width:484px}.base{position:absolute;top:610px;left:-200px;width:1060px;height:1060px;border-radius:50%;background:#eff8e8}`,'<div class="base"></div>'],
+ ['B','Editorial focus',`body{background:#f5f8ef}h1{top:64px;left:38px;right:30px;font-size:68px;line-height:1.08;letter-spacing:-3px}h1 em{font-style:normal;box-shadow:inset 0 -20px #a3e86c}.panel{position:absolute;top:335px;bottom:0;left:30px;right:30px;background:#a3e86c;border-radius:110px 110px 0 0}.phone{top:375px;left:95px;width:470px;transform:rotate(-5deg)}`,'<div class="panel"></div>'],
+ ['C','Progress spotlight',`body{background:#e9f4df}h1{top:63px;left:34px;right:34px;font-size:68px;line-height:1.08;letter-spacing:-3px;text-align:center}h1 em{font-style:normal;color:#163300}.ring{position:absolute;width:910px;height:910px;top:460px;left:-125px;border:85px solid #a3e86c;border-radius:50%;box-shadow:0 0 0 30px #d6ebc5}.phone{top:355px;left:102px;width:465px;transform:rotate(5deg)}`,'<div class="ring"></div>'],
+ ['D','Goals in context',`body{background:#f5f8ef}h1{top:63px;left:35px;right:35px;font-size:68px;line-height:1.08;letter-spacing:-3px;text-align:center}h1 em{font-style:normal;color:#163300}.panel{position:absolute;top:370px;bottom:0;width:660px;background:#a3e86c;border-radius:180px 180px 0 0}.phone.primary{top:460px;left:0;width:430px;transform:rotate(-8deg);z-index:2}.phone.secondary{top:355px;left:275px;width:360px;transform:rotate(9deg);z-index:1}.secondary .display{border-radius:40px}.secondary{border-radius:52px}.secondary .status{height:48px;font-size:13px}.secondary .island{width:95px;height:26px;top:10px}.secondary .island:after{top:8px}`,'<div class="panel"></div>'],
+ ['E','Bold green statement',`body{background:#a3e86c}h1{top:55px;left:27px;right:27px;text-align:center;font-size:68px;line-height:1.08;letter-spacing:-3px}h1 em{font-style:normal;color:#fff;background:#163300;padding:8px 15px 14px;border-radius:18px}.phone{top:375px;left:95px;width:470px;transform:perspective(1800px) rotateY(-10deg) rotateZ(-5deg)}.floor{position:absolute;left:-200px;bottom:-180px;width:1100px;height:440px;background:#e8f7dc;border-radius:50%;box-shadow:0 -25px 0 #c6edaa}`,'<div class="floor"></div>'],
+ ['F','Structured clarity',`body{background:#f5f8ef}h1{top:60px;left:32px;right:32px;text-align:center;font-size:68px;line-height:1.08;letter-spacing:-3px}h1 em{font-style:normal;color:#163300}.line{position:absolute;left:70px;right:70px;top:285px;height:14px;background:#d6e6cb;border-radius:12px}.line:before{content:'';display:block;width:65%;height:100%;background:#4a8527;border-radius:12px}.column{position:absolute;top:350px;bottom:0;left:90px;width:480px;background:#a3e86c;border-radius:70px 70px 0 0}.phone{top:355px;left:88px;width:484px}`,'<div class="line"></div><div class="column"></div>']
+];
+let source=fs.readFileSync('tools/create_store_directions.mjs','utf8');
+source=source.replace('output/app-store-design-directions','output/app-store-green-concepts');
+const start=source.indexOf('const directions=['),end=source.indexOf('\nfunction phone(',start);
+source=source.slice(0,start)+'const directions='+JSON.stringify(directions)+';\n'+source.slice(end);
+source=source.replace("'Small steps.<br><em>Big dreams.</em>':'Your goals.<br><em>Getting closer.</em>'", "'Set savings goals.<br><em>Track your progress.</em>':'See what’s saved.<br><em>Know what’s left.</em>'");
+source=source.replace('Six visual directions, A–F.','Six green-focused visual directions, A–F, with explicit savings-goal messaging.');
+source=source.replace("'Created and verified six directions, twelve PNGs, and two comparison sheets.'", "'Created and verified six green concepts, twelve PNGs, and two comparison sheets.'");
+const generated=new URL('./.green-store-render.mjs',import.meta.url);
+fs.writeFileSync(generated,source);
+try {await import(pathToFileURL(generated.pathname.replace(/^\/(\w:)/,'$1')).href);} finally {fs.unlinkSync(generated);}
