@@ -14,34 +14,78 @@ class EntryField extends StatelessWidget {
   });
   @override
   Widget build(BuildContext c) => Padding(
-    padding: const EdgeInsets.only(bottom: 20),
+    padding: const EdgeInsets.only(bottom: 12),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          t(c, label),
-          style: TextStyle(
-            color: muted(c),
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+        if (label != 'Amount')
+          Text(
+            t(c, label),
+            style: TextStyle(
+              color: muted(c),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-        const SizedBox(height: 9),
+        if (label != 'Amount') const SizedBox(height: 9),
         CupertinoTextField(
+          key: ValueKey('entry-$label'),
           controller: controller,
-          placeholder: t(c, label),
+          inputFormatters: numeric ? const [AmountInputFormatter()] : null,
+          placeholder: label == 'Amount' ? '0' : t(c, label),
+          prefix: label == 'Amount'
+              ? Padding(
+                  padding: const EdgeInsetsDirectional.only(start: 14),
+                  child: Text(
+                    c.watch<AppSettings>().currencySymbol,
+                    style: headline(c, 30),
+                  ),
+                )
+              : null,
           maxLength: maxLength,
-          keyboardType: numeric
+          keyboardType: label == 'Amount'
+              ? TextInputType.none
+              : numeric
               ? const TextInputType.numberWithOptions(decimal: true)
               : TextInputType.text,
           textInputAction: TextInputAction.next,
-          padding: const EdgeInsets.all(18),
-          style: TextStyle(color: ink(c), fontSize: 17),
+          padding: const EdgeInsets.all(12),
+          style: TextStyle(
+            color: ink(c),
+            fontSize: label == 'Amount' ? 30 : 16,
+            fontWeight: numeric ? FontWeight.w700 : FontWeight.w400,
+          ),
           decoration: BoxDecoration(
-            color: panel(c),
-            borderRadius: BorderRadius.circular(16),
+            color: canvas(c),
+            border: Border.all(color: ink(c).withValues(alpha: .7)),
+            borderRadius: BorderRadius.circular(14),
           ),
         ),
+        if (numeric)
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: controller,
+            builder: (c, value, _) {
+              final words = amountInWords(value.text);
+              return words.isEmpty
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Semantics(
+                        liveRegion: true,
+                        child: Text(
+                          words,
+                          key: ValueKey('amount-words-$label'),
+                          style: TextStyle(
+                            color: accent.resolveFrom(c),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    );
+            },
+          ),
       ],
     ),
   );
@@ -112,7 +156,9 @@ class GoalEditor extends StatefulWidget {
 class _GoalEditorState extends State<GoalEditor> {
   late final name = TextEditingController(text: widget.goal?.name);
   late final amount = TextEditingController(
-    text: widget.goal?.targetAmount.toStringAsFixed(2),
+    text: widget.goal == null
+        ? null
+        : groupAmount(widget.goal!.targetAmount.toStringAsFixed(2)),
   );
   late DateTime deadline =
       widget.goal?.deadline ??
@@ -183,6 +229,33 @@ class _GoalEditorState extends State<GoalEditor> {
     }
   }
 
+  Future<void> delete() async {
+    final goal = widget.goal;
+    if (saving || goal?.id == null) return;
+    FocusScope.of(context).unfocus();
+    if (!await confirm(
+      context,
+      t(context, 'Delete Goal?'),
+      t(context, 'This also deletes its transactions. This cannot be undone.'),
+    )) {
+      return;
+    }
+    if (!mounted) return;
+    setState(() => saving = true);
+    try {
+      await context.read<GoalsViewModel>().deleteGoal(goal!.id!);
+      if (mounted) Navigator.pop(context, true);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => saving = false);
+      await alert(
+        context,
+        t(context, 'Error'),
+        t(context, 'Could not save your changes. Please try again.'),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext c) => PageShell(
     title: widget.goal == null ? 'New goal' : 'Edit Goal',
@@ -190,41 +263,64 @@ class _GoalEditorState extends State<GoalEditor> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          t(c, 'Make it something worth saving for.'),
+          t(c, 'Make room for something that matters.'),
           style: TextStyle(color: muted(c), height: 1.4),
         ),
         const SizedBox(height: 22),
-        Panel(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                t(c, 'Choose an emoji'),
-                style: TextStyle(color: muted(c), fontSize: 13),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: ['🎯', '🌱', '🏡', '✈️', '📚', '🚗', '🎓', '🎁']
-                    .map(
-                      (value) => CupertinoButton(
-                        padding: const EdgeInsets.all(9),
-                        color: emoji == value ? lime : canvas(c),
-                        borderRadius: BorderRadius.circular(14),
-                        onPressed: () => setState(() => emoji = value),
-                        child: Text(
-                          value,
-                          style: const TextStyle(fontSize: 26),
-                        ),
+        GridView.count(
+          crossAxisCount: 3,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisExtent: 90,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          children: goalCategories.entries.map((entry) {
+            final selected = emoji == entry.key;
+            return CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: () => setState(() {
+                if (name.text.isEmpty ||
+                    goalCategories.values.any((v) => v.$1 == name.text)) {
+                  name.text = entry.value.$1;
+                }
+                emoji = entry.key;
+              }),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: selected ? lilac : panel(c),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: selected ? lilac : muted(c).withValues(alpha: .2),
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      entry.value.$2,
+                      size: 26,
+                      color: selected ? forest : ink(c),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      t(c, entry.value.$1),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      style: TextStyle(
+                        color: selected ? forest : ink(c),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
                       ),
-                    )
-                    .toList(),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
+            );
+          }).toList(),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
         EntryField('Goal name', name, maxLength: 80),
         EntryField('Target amount', amount, numeric: true),
         CupertinoListTile.notched(
@@ -254,6 +350,33 @@ class _GoalEditorState extends State<GoalEditor> {
         ],
         const SizedBox(height: 28),
         PrimaryButton('Save goal', onPressed: save, busy: saving),
+        if (widget.goal != null) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: CupertinoButton(
+              onPressed: saving ? null : delete,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    CupertinoIcons.trash,
+                    color: CupertinoColors.systemRed,
+                    size: 19,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    t(c, 'Delete Goal'),
+                    style: const TextStyle(
+                      color: CupertinoColors.systemRed,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ],
     ),
   );
@@ -327,11 +450,21 @@ class _TransactionEditorState extends State<TransactionEditor> {
       setState(() => saving = false);
       HapticFeedback.lightImpact();
       if (!widget.withdraw && reached.isNotEmpty) {
-        await alert(
-          context,
-          t(context, 'A milestone worth celebrating'),
-          '${goal.name} · ${reached.last}%\n${t(context, 'Every small step counts. Keep going!')}',
+        final share = await showCupertinoDialog<bool>(
+          context: context,
+          builder: (_) => MilestoneDialog(updated!, reached.last),
         );
+        if (!mounted) return;
+        if (share == true) {
+          final navigator = Navigator.of(context, rootNavigator: true);
+          navigator.pop();
+          navigator.push(
+            CupertinoPageRoute<void>(
+              builder: (_) => ProgressSharePage(updated!),
+            ),
+          );
+          return;
+        }
       }
       if (mounted) Navigator.pop(context);
     } catch (_) {
@@ -353,11 +486,6 @@ class _TransactionEditorState extends State<TransactionEditor> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            t(c, 'Record your savings. Your money stays with you.'),
-            style: TextStyle(color: muted(c), height: 1.4),
-          ),
-          const SizedBox(height: 24),
           if (vm.goals.isEmpty)
             EmptyState(
               'Create a goal first',
@@ -392,9 +520,75 @@ class _TransactionEditorState extends State<TransactionEditor> {
                 if (choice != null && mounted) setState(() => goalId = choice);
               },
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             EntryField('Amount', amount, numeric: true),
-            EntryField('Note (optional)', note, maxLength: 200),
+            if (goal != null) ...[
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: amount,
+                builder: (c, value, _) {
+                  final entered = parseAmount(value.text) ?? 0;
+                  final next =
+                      goal.savedAmount + (widget.withdraw ? -entered : entered);
+                  return Panel(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${t(c, 'Currently saved')}: ${money(c, goal.savedAmount)}',
+                          style: TextStyle(color: muted(c), fontSize: 13),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${t(c, 'After this entry')}: ${money(c, next)}',
+                          style: headline(c, 22),
+                        ),
+                        const SizedBox(height: 12),
+                        ProgressTrack(next / goal.targetAmount),
+                      ],
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+            ],
+            SettingsGroup(
+              children: [
+                SettingsRow(
+                  'Note (optional)',
+                  CupertinoIcons.doc_text,
+                  value: note.text.isEmpty
+                      ? null
+                      : note.text.length > 16
+                      ? '${note.text.substring(0, 16)}…'
+                      : note.text,
+                  onTap: () async {
+                    await showCupertinoDialog<void>(
+                      context: c,
+                      builder: (dialog) => CupertinoAlertDialog(
+                        title: Text(t(c, 'Note (optional)')),
+                        content: Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: CupertinoTextField(
+                            controller: note,
+                            maxLength: 200,
+                            autofocus: true,
+                            placeholder: t(c, 'Note (optional)'),
+                          ),
+                        ),
+                        actions: [
+                          CupertinoDialogAction(
+                            onPressed: () => Navigator.pop(dialog),
+                            child: Text(t(c, 'Done')),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (mounted) setState(() {});
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             CupertinoListTile.notched(
               backgroundColor: panel(c),
               title: Text(t(c, 'Date')),
@@ -415,7 +609,9 @@ class _TransactionEditorState extends State<TransactionEditor> {
                 style: const TextStyle(color: CupertinoColors.systemRed),
               ),
             ],
-            const SizedBox(height: 28),
+            const SizedBox(height: 12),
+            AmountKeypad(amount),
+            const SizedBox(height: 16),
             PrimaryButton(
               widget.withdraw ? 'Confirm withdrawal' : 'Save deposit',
               onPressed: save,

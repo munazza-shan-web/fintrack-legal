@@ -13,14 +13,26 @@ flutter analyze
 flutter run
 ```
 
-The SDK minimum is Dart 3.12.2, matching this checkout's installed Flutter 3.44.8. Existing preferences are retained; new installs start in light mode. Internal package names, platform application IDs, notification-channel IDs, and `fintrack.db` remain stable to preserve existing app identity and stored savings during upgrades.
+The SDK minimum is Dart 3.12.2, matching this checkout's installed Flutter 3.44.8. Existing preferences are retained; new installs start in dark mode with USD display currency. Internal package names, platform application IDs, notification-channel IDs, and `fintrack.db` remain stable to preserve existing app identity and stored savings during upgrades.
+
+## App redesign — 1.3.0
+
+Version 1.3.2 applies navigation B: only the active destination has a horizontal label, while all four destinations keep accessibility labels and actions. Home's small header symbol is removed. The chosen lilac-pot sprout is the launcher identity, and a borderless lime launch screen shows a three-dot loader during real initialization. Native Android/iOS launch backgrounds match; reduced motion is respected. No artificial launch delay is added.
+
+Version 1.3.1 adds live comma grouping and amount-in-words hints for target and savings entries, a prominent Home streak card, a floating blurred navigation capsule, explicit root-tab back-button handling, equally sized tappable monthly activity summaries, and a persisted Black appearance alongside Dark and Light.
+
+The approved visual direction is implemented with bundled Manrope typography, forest-charcoal surfaces, lime actions, lilac/peach goal accents, compact shared navigation, a sprout companion, circular goal progress, category selection, savings keypad, live balance previews, milestone celebrations, and private share cards. Android and iOS use the same widgets; native safe areas, share sheets, notification permissions, and keyboards remain platform-specific.
+
+Per the latest instruction the app remains free. **Settings → Preview trial screen** opens the minimal US/UK paywall design. It is explicitly a visual preview: there is no purchase SDK, payment gate, real trial, or subscription charge. The two prices are samples. The preview has one Restore purchases link and a Done control so users can leave it in this free version.
+
+Manrope is bundled under the SIL Open Font License in `assets/fonts/Manrope-OFL.txt`. See `output/redesign-1.3/` for screenshots rendered from the actual widgets. Native iOS compilation still requires a Mac.
 
 ## Selected logo
 
-The user-selected **Savings Goals** logo is retained unchanged at `assets/branding/save_goals_logo_source.png`. App and web sizes are derived from this file, preserving its lettering and colors. The previous vector concept is no longer used.
+The newly selected **Savings Goals** sprout icon is retained unchanged at `assets/branding/selected_sprout_source.png`. App launcher sizes are derived from this source. The transparent `sprout_lockup.png` is used directly on the lime splash background, without an icon tile or frame. The older typography-only source remains at `save_goals_logo_source.png` for the existing website branding.
 
 ```sh
-node tools/build-brand.mjs /absolute/path/to/node_modules/sharp
+dart run tools/build_app_brand.dart
 dart run flutter_launcher_icons
 ```
 

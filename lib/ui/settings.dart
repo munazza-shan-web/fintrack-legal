@@ -53,37 +53,29 @@ class SettingsPage extends StatelessWidget {
     final settings = c.watch<AppSettings>();
     return PageShell(
       title: 'Settings',
+      rootTab: true,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AppHeader(),
-          const SizedBox(height: 20),
-          CupertinoListSection.insetGrouped(
-            margin: EdgeInsets.zero,
-            header: Text(t(c, 'Make it yours')),
+          SettingsGroup(
             children: [
-              CupertinoListTile.notched(
-                title: Text(t(c, 'Currency')),
-                leading: const Icon(CupertinoIcons.money_dollar_circle),
-                additionalInfo: Text(settings.currencyCode),
-                trailing: const CupertinoListTileChevron(),
+              SettingsRow(
+                'Currency',
+                CupertinoIcons.money_dollar_circle,
+                value: settings.currencyCode,
                 onTap: () async {
                   final value = await chooseOption(c, 'Currency', {
-                    'PKR': 'Pakistani Rupee',
                     'USD': 'US Dollar',
                     'GBP': 'British Pound',
                     'EUR': 'Euro',
+                    'PKR': 'Pakistani Rupee',
                   });
                   if (value != null) await settings.setCurrency(value);
                 },
               ),
-              CupertinoListTile.notched(
-                title: Text(t(c, 'Language')),
-                leading: const Icon(CupertinoIcons.globe),
-                additionalInfo: Text(
-                  settings.languageCode == 'ur' ? 'اردو' : 'English',
-                ),
-                trailing: const CupertinoListTileChevron(),
+              SettingsRow(
+                'Language',
+                CupertinoIcons.globe,
+                value: settings.languageCode == 'ur' ? 'اردو' : 'English',
                 onTap: () async {
                   final value = await chooseOption(c, 'Language', {
                     'en': 'English',
@@ -104,44 +96,33 @@ class SettingsPage extends StatelessWidget {
                   }
                 },
               ),
-              CupertinoListTile.notched(
-                title: Text(t(c, 'Appearance')),
-                leading: const Icon(CupertinoIcons.circle_lefthalf_fill),
-                additionalInfo: Text(
-                  t(c, settings.themeMode == ThemeMode.dark ? 'Dark' : 'Light'),
-                ),
-                trailing: const CupertinoListTileChevron(),
+              SettingsRow(
+                'Appearance',
+                CupertinoIcons.moon,
+                value: t(c, settings.appearanceLabel),
                 onTap: () async {
                   final value = await chooseOption(c, 'Appearance', {
                     'light': 'Light',
                     'dark': 'Dark',
+                    'black': 'Black',
                   });
                   if (value != null) {
-                    await settings.setTheme(
-                      value == 'dark' ? ThemeMode.dark : ThemeMode.light,
-                    );
+                    await settings.setAppearance(value);
                   }
                 },
               ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          CupertinoListSection.insetGrouped(
-            margin: EdgeInsets.zero,
-            header: Text(t(c, 'Your privacy & routine')),
-            children: [
-              CupertinoListTile.notched(
-                title: Text(t(c, 'Hide balances')),
-                leading: const Icon(CupertinoIcons.eye_slash),
-                trailing: CupertinoSwitch(
+              SettingsRow(
+                'Hide balances',
+                CupertinoIcons.eye_slash,
+                control: CupertinoSwitch(
                   value: settings.hideBalances,
                   onChanged: settings.setHideBalances,
                 ),
               ),
-              CupertinoListTile.notched(
-                title: Text(t(c, 'Daily reminder')),
-                leading: const Icon(CupertinoIcons.bell),
-                trailing: CupertinoSwitch(
+              SettingsRow(
+                'Daily reminder',
+                CupertinoIcons.bell,
+                control: CupertinoSwitch(
                   value: settings.remindersEnabled,
                   onChanged: (value) async {
                     try {
@@ -161,66 +142,98 @@ class SettingsPage extends StatelessWidget {
                   },
                 ),
               ),
-              if (settings.remindersEnabled)
-                CupertinoListTile.notched(
-                  title: Text(t(c, 'Reminder time')),
-                  additionalInfo: Text(settings.reminderTimeLabel),
-                  trailing: const CupertinoListTileChevron(),
-                  onTap: () => _reminderTime(c, settings),
-                ),
+              SettingsRow(
+                'Reminder time',
+                CupertinoIcons.clock,
+                value: settings.reminderTimeLabel,
+                onTap: () => _reminderTime(c, settings),
+              ),
             ],
           ),
-          const SizedBox(height: 24),
-          CupertinoListSection.insetGrouped(
-            margin: EdgeInsets.zero,
-            header: Text(t(c, 'About Savings Goals')),
+          const SizedBox(height: 18),
+          SettingsGroup(
             children: [
-              CupertinoListTile.notched(
-                title: Text(t(c, 'Privacy Policy')),
-                leading: const Icon(CupertinoIcons.hand_raised),
-                trailing: const CupertinoListTileChevron(),
+              SettingsRow(
+                'Privacy Policy',
+                CupertinoIcons.doc_text,
                 onTap: () => openLink(c, AppBrand.privacyUrl),
               ),
-              CupertinoListTile.notched(
-                title: Text(t(c, 'Terms & Conditions')),
-                leading: const Icon(CupertinoIcons.doc_text),
-                trailing: const CupertinoListTileChevron(),
+              SettingsRow(
+                'Terms & Conditions',
+                CupertinoIcons.doc_text,
                 onTap: () => openLink(c, AppBrand.termsUrl),
               ),
-              CupertinoListTile.notched(
-                title: Text(t(c, 'Contact support')),
-                leading: const Icon(CupertinoIcons.envelope),
-                trailing: const CupertinoListTileChevron(),
+              SettingsRow(
+                'Contact support',
+                CupertinoIcons.headphones,
                 onTap: () => openLink(c, 'mailto:jiyoo7480@gmail.com'),
               ),
             ],
           ),
-          const SizedBox(height: 28),
-          Panel(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 18),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark(c)
+                  ? const Color(0xFF2B3A24)
+                  : const Color(0xFFE2EDCF),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
               children: [
-                Text(
-                  t(c, '100% free. Every goal. Every feature.'),
-                  style: headline(c, 18),
+                const SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: FittedBox(child: SavingsSprout(progress: .6)),
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  AppBrand.organization,
-                  style: TextStyle(color: muted(c), fontSize: 13),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  t(c, 'Your data stays on your device'),
-                  style: TextStyle(color: muted(c), fontSize: 13),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  t(c, 'Currency changes labels, not amounts.'),
-                  style: TextStyle(color: muted(c), fontSize: 12),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t(c, '100% free. Every goal. Every feature.'),
+                        style: headline(c, 15),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        AppBrand.organization,
+                        style: TextStyle(
+                          color: muted(c),
+                          fontSize: 10,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 14),
+          SettingsGroup(
+            children: [
+              SettingsRow(
+                'Preview trial screen',
+                CupertinoIcons.rectangle,
+                onTap: () => openPage(c, const PaywallPreview()),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Design preview only. The app is free; no payments or subscriptions.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: muted(c), fontSize: 11),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            t(c, 'Your data stays on your device'),
+            style: TextStyle(color: muted(c), fontSize: 11),
+          ),
+          Text(
+            t(c, 'Currency changes labels, not amounts.'),
+            style: TextStyle(color: muted(c), fontSize: 11),
           ),
         ],
       ),

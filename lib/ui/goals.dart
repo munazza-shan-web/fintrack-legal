@@ -1,95 +1,11 @@
 part of 'save_goals_app.dart';
 
-class GoalTile extends StatelessWidget {
-  final SavingsGoal goal;
-  const GoalTile(this.goal, {super.key});
-  @override
-  Widget build(BuildContext c) => Padding(
-    padding: const EdgeInsets.only(bottom: 12),
-    child: CupertinoButton(
-      padding: EdgeInsets.zero,
-      onPressed: () => openPage(c, GoalDetail(goal)),
-      child: Panel(
-        color: goal.progress >= .75
-            ? CupertinoDynamicColor.resolve(
-                const CupertinoDynamicColor.withBrightness(
-                  color: Color(0xFFE2F3C9),
-                  darkColor: Color(0xFF20351B),
-                ),
-                c,
-              )
-            : CupertinoDynamicColor.resolve(
-                const CupertinoDynamicColor.withBrightness(
-                  color: Color(0xFFEBE4F6),
-                  darkColor: Color(0xFF2A2435),
-                ),
-                c,
-              ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 46,
-                  height: 46,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: canvas(c),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Text(goal.emoji, style: const TextStyle(fontSize: 25)),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(goal.name, style: headline(c, 17)),
-                      const SizedBox(height: 4),
-                      Text(
-                        goal.isCompleted
-                            ? t(c, 'Goal achieved')
-                            : dateLabel(goal.deadline),
-                        style: TextStyle(color: muted(c), fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(CupertinoIcons.chevron_forward, color: muted(c), size: 15),
-              ],
-            ),
-            const SizedBox(height: 18),
-            ProgressTrack(goal.progress),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    money(c, goal.savedAmount),
-                    style: TextStyle(
-                      color: ink(c),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                Text(
-                  '${(goal.progress * 100).round()}%',
-                  style: TextStyle(
-                    color: accent.resolveFrom(c),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
+Future<void> editGoalFromDetail(BuildContext c, SavingsGoal goal) async {
+  final deleted = await Navigator.of(
+    c,
+    rootNavigator: true,
+  ).push<bool>(CupertinoPageRoute(builder: (_) => GoalEditor(goal: goal)));
+  if (deleted == true && c.mounted) Navigator.pop(c);
 }
 
 class GoalsPage extends StatefulWidget {
@@ -99,7 +15,7 @@ class GoalsPage extends StatefulWidget {
 }
 
 class _GoalsPageState extends State<GoalsPage> {
-  int filter = 0;
+  int filter = 1;
   @override
   Widget build(BuildContext c) {
     final vm = c.watch<GoalsViewModel>();
@@ -109,7 +25,8 @@ class _GoalsPageState extends State<GoalsPage> {
         )
         .toList();
     return PageShell(
-      title: 'Goals',
+      title: 'Your goals',
+      rootTab: true,
       trailing: CupertinoButton(
         padding: EdgeInsets.zero,
         onPressed: () => openPage(c, const GoalEditor()),
@@ -122,25 +39,35 @@ class _GoalsPageState extends State<GoalsPage> {
         children: [
           SizedBox(
             width: double.infinity,
-            child: CupertinoSlidingSegmentedControl<int>(
+            child: SavingsSegments<int>(
               groupValue: filter,
-              children: {
-                0: Text(t(c, 'All')),
-                1: Text(t(c, 'Active')),
-                2: Text(t(c, 'Completed')),
-              },
+              children: {1: Text(t(c, 'Active')), 2: Text(t(c, 'Completed'))},
               onValueChanged: (v) => setState(() => filter = v ?? 0),
             ),
           ),
           const SizedBox(height: 20),
           const DataStatus(),
           ...goals.map((g) => GoalTile(g)),
+          if (goals.isNotEmpty) ...[
+            const SizedBox(height: 28),
+            const SizedBox(
+              height: 110,
+              width: 110,
+              child: FittedBox(child: SavingsSprout(progress: .5)),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              t(c, 'Every goal starts with one small step.'),
+              textAlign: TextAlign.center,
+              style: TextStyle(color: muted(c), fontSize: 14),
+            ),
+          ],
           if (goals.isEmpty && !vm.isLoading && vm.error == null)
             EmptyState(
-              'A goal for every chapter',
+              'Big plans start small.',
               filter == 2
                   ? 'Completed goals will appear here.'
-                  : 'Give your next goal a name and a date.',
+                  : 'Create your first goal. We’ll help you find your pace.',
               onAdd: () => openPage(c, const GoalEditor()),
             ),
         ],
@@ -166,11 +93,11 @@ class _PlanCardState extends State<PlanCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(widget.goal.name, style: headline(c, 18)),
+          Text(t(c, 'Your saving pace'), style: headline(c, 18)),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            child: CupertinoSlidingSegmentedControl<int>(
+            child: SavingsSegments<int>(
               groupValue: cadence,
               children: {
                 0: Text(t(c, 'Daily')),
@@ -193,7 +120,7 @@ class _PlanCardState extends State<PlanCard> {
             ),
             CupertinoButton(
               padding: EdgeInsets.zero,
-              onPressed: () => openPage(c, GoalEditor(goal: widget.goal)),
+              onPressed: () => editGoalFromDetail(c, widget.goal),
               child: Text(t(c, 'Edit Goal')),
             ),
           ] else ...[
@@ -208,19 +135,14 @@ class _PlanCardState extends State<PlanCard> {
               ),
               style: TextStyle(color: muted(c), fontSize: 14),
             ),
-            if (!widget.goal.isCompleted) ...[
-              const SizedBox(height: 12),
-              Text(
-                '${plan.daysLeft} ${t(c, 'saving days left, including the deadline.')}',
-                style: TextStyle(color: muted(c), fontSize: 12, height: 1.4),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                t(c, 'A suggested pace, not an automatic transfer.'),
-                style: TextStyle(color: muted(c), fontSize: 12),
-              ),
-            ],
+            const SizedBox(height: 5),
+            Text(
+              t(c, 'Suggested pace'),
+              style: TextStyle(color: muted(c), fontSize: 11),
+            ),
           ],
+          const SizedBox(height: 24),
+          MilestoneRail(widget.goal),
         ],
       ),
     );
@@ -234,119 +156,51 @@ class GoalDetail extends StatelessWidget {
   Widget build(BuildContext c) {
     final vm = c.watch<GoalsViewModel>();
     final goal = vm.getGoalById(initial.id ?? -1) ?? initial;
-    final plan = SavingsPlan(goal);
     final transactions = vm.transactions.where((tx) => tx.goalId == goal.id);
     return PageShell(
       title: goal.name,
       trailing: CupertinoButton(
         padding: EdgeInsets.zero,
-        onPressed: () => openPage(c, GoalEditor(goal: goal)),
+        onPressed: () => editGoalFromDetail(c, goal),
         child: Text(t(c, 'Edit')),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Panel(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(goal.emoji, style: const TextStyle(fontSize: 42)),
-                const SizedBox(height: 20),
-                Text(money(c, goal.savedAmount), style: headline(c, 34)),
-                const SizedBox(height: 6),
-                Text(
-                  '${t(c, 'Target')}: ${money(c, goal.targetAmount)}',
-                  style: TextStyle(color: muted(c)),
-                ),
-                const SizedBox(height: 22),
-                ProgressTrack(goal.progress),
-                const SizedBox(height: 14),
-                Text(
-                  '${(goal.progress * 100).round()}% · ${dateLabel(goal.deadline)}',
-                  style: TextStyle(color: muted(c), fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          PrimaryButton(
-            'Add savings',
-            onPressed: () => openPage(c, TransactionEditor(goalId: goal.id)),
-          ),
-          Center(
-            child: CupertinoButton(
-              onPressed: () => openPage(
-                c,
-                TransactionEditor(goalId: goal.id, withdraw: true),
-              ),
-              child: Text(t(c, 'Record a withdrawal')),
-            ),
-          ),
-          const Section('Your savings plan'),
+          GoalSummary(goal),
+          const SizedBox(height: 12),
           PlanCard(goal),
-          const Section('Milestones'),
-          Panel(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 24),
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [25, 50, 75, 100].map((percent) {
-                    final reached = plan.reachedMilestones.contains(percent);
-                    return Semantics(
-                      label:
-                          '$percent% ${t(c, reached ? 'Reached' : 'Not reached')}',
-                      child: Container(
-                        width: 64,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: reached ? lime : canvas(c),
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: Column(
-                          children: [
-                            Icon(
-                              reached
-                                  ? CupertinoIcons.checkmark_seal_fill
-                                  : CupertinoIcons.flag,
-                              color: reached ? forest : muted(c),
-                              size: 25,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              '$percent%',
-                              style: TextStyle(
-                                color: reached ? forest : muted(c),
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                Expanded(
+                  child: PrimaryButton(
+                    'Add savings',
+                    onPressed: () =>
+                        openPage(c, TransactionEditor(goalId: goal.id)),
+                  ),
                 ),
-                const SizedBox(height: 18),
-                Text(
-                  plan.nextMilestone == null
-                      ? t(c, 'Goal achieved. Enjoy this moment.')
-                      : '${money(c, plan.amountToNextMilestone)} ${t(c, 'to your next milestone')} (${plan.nextMilestone}%).',
-                  style: TextStyle(color: muted(c), fontSize: 14, height: 1.4),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  t(c, 'Milestones reflect your current balance.'),
-                  style: TextStyle(color: muted(c), fontSize: 12),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlineButton(
+                    'Withdrawal',
+                    CupertinoIcons.minus_circle,
+                    () => openPage(
+                      c,
+                      TransactionEditor(goalId: goal.id, withdraw: true),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
-          PrimaryButton(
+          const SizedBox(height: 12),
+          OutlineButton(
             'Share your progress',
-            onPressed: () => openPage(c, ProgressSharePage(goal)),
+            CupertinoIcons.share,
+            () => openPage(c, ProgressSharePage(goal)),
           ),
           const Section('Goal activity'),
           if (transactions.isEmpty)
@@ -355,40 +209,36 @@ class GoalDetail extends StatelessWidget {
               style: TextStyle(color: muted(c)),
             ),
           ...transactions.map((tx) => TransactionTile(tx)),
-          const SizedBox(height: 24),
-          CupertinoButton(
-            onPressed: () async {
-              if (!await confirm(
-                c,
-                t(c, 'Delete Goal?'),
-                t(
-                  c,
-                  'This also deletes its transactions. This cannot be undone.',
-                ),
-              )) {
-                return;
-              }
-              if (!c.mounted) return;
-              try {
-                await c.read<GoalsViewModel>().deleteGoal(goal.id!);
-                if (c.mounted) Navigator.pop(c);
-              } catch (e) {
-                if (c.mounted) {
-                  await alert(
-                    c,
-                    t(c, 'Error'),
-                    t(c, 'Could not save your changes. Please try again.'),
-                  );
-                }
-              }
-            },
-            child: Text(
-              t(c, 'Delete Goal'),
-              style: const TextStyle(color: CupertinoColors.systemRed),
-            ),
-          ),
         ],
       ),
     );
   }
+}
+
+class _GoalRing extends CustomPainter {
+  final double progress;
+  final Color track, fill;
+  _GoalRing(this.progress, this.track, this.fill);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = (Offset.zero & size).deflate(7);
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 10
+      ..strokeCap = StrokeCap.round
+      ..color = track;
+    canvas.drawOval(rect, paint);
+    paint.color = fill;
+    canvas.drawArc(
+      rect,
+      -1.5708,
+      6.283185 * progress.clamp(0, 1),
+      false,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_GoalRing old) =>
+      old.progress != progress || old.track != track || old.fill != fill;
 }

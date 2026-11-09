@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart' show ThemeMode;
@@ -98,6 +99,12 @@ class MemoryGoals extends GoalsViewModel {
   }
 }
 
+class DeferredGoals extends MemoryGoals {
+  final ready = Completer<void>();
+  @override
+  Future<void> loadData() => ready.future;
+}
+
 Future<void> mount(
   WidgetTester tester,
   MemoryGoals vm, {
@@ -126,14 +133,7 @@ Future<void> mount(
 }
 
 Future<void> goTab(WidgetTester tester, IconData icon) async {
-  await tester.tap(
-    find
-        .descendant(
-          of: find.byType(CupertinoTabBar),
-          matching: find.byIcon(icon),
-        )
-        .first,
-  );
+  await tester.tap(find.byIcon(icon).last);
   await tester.pumpAndSettle();
 }
 
@@ -147,6 +147,257 @@ SavingsGoal example({double saved = 200}) => SavingsGoal(
 );
 
 void main() {
+  setUpAll(() async {
+    final font = FontLoader('Manrope')
+      ..addFont(rootBundle.load('assets/fonts/manrope.ttf'));
+    await font.load();
+  });
+  testWidgets(
+    'Delete is below Save in Edit and confirmation returns to the goals root',
+    (tester) async {
+      final vm = MemoryGoals()..records.add(example());
+      vm.entries.add(
+        SavingsTransaction(
+          goalId: 1,
+          amount: 200,
+          type: TransactionType.deposit,
+          date: DateTime.now(),
+        ),
+      );
+      await mount(tester, vm);
+      openPage(
+        tester.element(find.byType(HomePage)),
+        GoalDetail(vm.goals.first),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Delete Goal'), findsNothing);
+      final add = find.text('Add savings');
+      final withdraw = find.text('Withdrawal');
+      expect(
+        tester.getCenter(add).dy,
+        closeTo(tester.getCenter(withdraw).dy, 3),
+      );
+      await tester.tap(find.text('Edit'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Delete Goal'));
+      expect(
+        tester.getTopLeft(find.text('Delete Goal')).dy,
+        greaterThan(tester.getTopLeft(find.text('Save goal')).dy),
+      );
+      await tester.tap(find.text('Delete Goal'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(vm.records, hasLength(1));
+      expect(vm.entries, hasLength(1));
+      await tester.tap(find.text('Delete Goal'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+      expect(vm.records, isEmpty);
+      expect(vm.entries, isEmpty);
+      expect(find.byType(GoalEditor), findsNothing);
+      expect(find.byType(GoalDetail), findsNothing);
+      expect(find.byType(MainScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'B navigation shows only the active label and retains all accessible tabs',
+    (tester) async {
+      await mount(tester, MemoryGoals(), width: 320);
+      final bar = find.byType(FloatingNavigation);
+      expect(
+        find.descendant(of: bar, matching: find.byType(Text)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: bar, matching: find.text('Home')),
+        findsOneWidget,
+      );
+      expect(find.bySemanticsLabel('Settings'), findsOneWidget);
+      expect(find.byIcon(CupertinoIcons.leaf_arrow_circlepath), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('tab-3')));
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(of: bar, matching: find.text('Settings')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: bar, matching: find.text('Home')),
+        findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'Splash waits for real initialization then leaves without a fixed delay',
+    (tester) async {
+      final vm = DeferredGoals();
+      await mount(tester, vm);
+      openPage(tester.element(find.byType(HomePage)), const StartupGate());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.byType(LaunchScreen), findsOneWidget);
+      expect(find.bySemanticsLabel('Loading your goals'), findsOneWidget);
+      vm.ready.complete();
+      await tester.pumpAndSettle();
+      expect(find.byType(LaunchScreen), findsNothing);
+      expect(find.byType(MainScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets('Splash respects reduced motion', (tester) async {
+    await tester.pumpWidget(
+      const CupertinoApp(
+        home: MediaQuery(
+          data: MediaQueryData(disableAnimations: true),
+          child: LaunchScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(LaunchDots), findsOneWidget);
+    expect(tester.binding.hasScheduledFrame, isFalse);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('Target amount groups digits and explains the magnitude live', (
+    tester,
+  ) async {
+    final vm = MemoryGoals();
+    await mount(tester, vm);
+    openPage(tester.element(find.byType(HomePage)), const GoalEditor());
+    await tester.pumpAndSettle();
+    final field = find.byKey(const ValueKey('entry-Target amount'));
+    await tester.enterText(field, '100000');
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<CupertinoTextField>(field).controller!.text,
+      '100,000',
+    );
+    expect(find.text('One hundred thousand (1 lakh)'), findsOneWidget);
+    expect(vm.records, isEmpty);
+    await tester.enterText(field, '10000');
+    await tester.pumpAndSettle();
+    expect(find.text('Ten thousand'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets(
+    'Floating navigation, prominent real streak and matching activity cards',
+    (tester) async {
+      final vm = MemoryGoals()..records.add(example());
+      for (var i = 0; i < 3; i++) {
+        vm.entries.add(
+          SavingsTransaction(
+            goalId: 1,
+            amount: 10,
+            type: TransactionType.deposit,
+            date: DateTime.now().subtract(Duration(days: i)),
+          ),
+        );
+      }
+      await mount(tester, vm, width: 320);
+      expect(find.text('3 days'), findsOneWidget);
+      expect(find.byKey(const ValueKey('home-streak')), findsOneWidget);
+      final nav = find.byKey(const ValueKey('floating-navigation'));
+      expect(tester.getRect(nav).left, greaterThan(0));
+      expect(tester.getRect(nav).bottom, lessThan(844));
+      expect(find.byType(BackdropFilter), findsOneWidget);
+      for (final icon in [
+        CupertinoIcons.flag,
+        CupertinoIcons.chart_bar,
+        CupertinoIcons.settings,
+      ]) {
+        await goTab(tester, icon);
+        expect(find.byIcon(CupertinoIcons.back), findsNothing);
+      }
+      await goTab(tester, CupertinoIcons.chart_bar);
+      final saved = find.byKey(const ValueKey('monthly-deposits'));
+      final withdrawn = find.byKey(const ValueKey('monthly-withdrawals'));
+      expect(tester.getSize(saved), tester.getSize(withdrawn));
+      await tester.tap(withdrawn);
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<SavingsSegments<int>>(find.byType(SavingsSegments<int>))
+            .groupValue,
+        2,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets('Black appearance persists and uses a black canvas', (
+    tester,
+  ) async {
+    await mount(tester, MemoryGoals());
+    final c = tester.element(find.byType(HomePage));
+    await c.read<AppSettings>().setAppearance('black');
+    await tester.pumpAndSettle();
+    expect(
+      canvas(tester.element(find.byType(HomePage))),
+      const Color(0xFF000000),
+    );
+    final loaded = AppSettings();
+    await loaded.loadSettings();
+    expect(loaded.appearanceLabel, 'Black');
+    expect(loaded.themeMode, ThemeMode.dark);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets(
+    'Keypad previews the balance and leaves records unchanged before saving',
+    (tester) async {
+      final vm = MemoryGoals()..records.add(example());
+      await mount(tester, vm);
+      openPage(
+        tester.element(find.byType(HomePage)),
+        const TransactionEditor(goalId: 1),
+      );
+      await tester.pumpAndSettle();
+      for (final key in ['1', '0', '0']) {
+        final keyButton = find.descendant(
+          of: find.byType(AmountKeypad),
+          matching: find.text(key),
+        );
+        await tester.ensureVisible(keyButton);
+        await tester.tap(keyButton);
+        await tester.pumpAndSettle();
+      }
+      final field = tester.widget<CupertinoTextField>(
+        find.byKey(const ValueKey('entry-Amount')),
+      );
+      expect(field.controller!.text, '100');
+      expect(find.text('After this entry: \$ 300'), findsOneWidget);
+      expect(vm.goals.single.savedAmount, 200);
+      await tester.tap(find.byIcon(CupertinoIcons.delete_left));
+      await tester.pumpAndSettle();
+      expect(field.controller!.text, '10');
+      expect(vm.entries, isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  for (final width in [320.0, 390.0]) {
+    testWidgets('Free app paywall preview is inert and localized at $width', (
+      tester,
+    ) async {
+      await mount(tester, MemoryGoals(), width: width, theme: ThemeMode.dark);
+      expect(find.byType(PaywallPreview), findsNothing);
+      openPage(tester.element(find.byType(HomePage)), const PaywallPreview());
+      await tester.pumpAndSettle();
+      expect(find.text('Restore purchases'), findsOneWidget);
+      expect(find.textContaining('\$29.99 / year'), findsOneWidget);
+      await tester.tap(find.text('UK · GBP'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('£24.99 / year'), findsOneWidget);
+      await tester.ensureVisible(find.text('Start 7-day free trial'));
+      await tester.tap(find.text('Start 7-day free trial'));
+      await tester.pumpAndSettle();
+      expect(find.text('Preview only'), findsOneWidget);
+      await tester.tap(find.text('Done').last);
+      await tester.pumpAndSettle();
+      expect(find.byType(PaywallPreview), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
   for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
     testWidgets(
       'Platform parity ${platform.name}',
@@ -156,11 +407,11 @@ void main() {
         addTearDown(tester.view.resetPadding);
         await tester.pumpAndSettle();
         expect(
-          tester.getTopLeft(find.text('Overview')).dy,
+          tester.getTopLeft(find.text('Make progress, your way.')).dy,
           greaterThanOrEqualTo(44),
         );
         expect(find.text('Savings Goals'), findsOneWidget);
-        expect(find.byType(MomentumHeader), findsOneWidget);
+        expect(find.byType(SavingsSprout), findsOneWidget);
         await goTab(tester, CupertinoIcons.flag);
         expect(find.byType(GoalTile), findsOneWidget);
         expect(tester.takeException(), isNull);
@@ -207,7 +458,7 @@ void main() {
     addTearDown(tester.view.resetPadding);
     await tester.pumpAndSettle();
     expect(
-      tester.getTopLeft(find.text('Overview')).dy,
+      tester.getTopLeft(find.text('Make progress, your way.')).dy,
       greaterThanOrEqualTo(44),
     );
     final regions = tester.widgetList<AnnotatedRegion<SystemUiOverlayStyle>>(
@@ -244,7 +495,7 @@ void main() {
             expect(tester.takeException(), isNull);
           }
           expect(find.text('AILANGA SCHOOL PROJECT'), findsOneWidget);
-          final context = tester.element(find.byType(CupertinoTabBar));
+          final context = tester.element(find.byType(MainScreen));
           expect(
             CupertinoTheme.of(context).brightness,
             mode == ThemeMode.dark ? Brightness.dark : Brightness.light,
@@ -300,24 +551,18 @@ void main() {
     await tester.ensureVisible(find.text('Add savings'));
     await tester.tap(find.text('Add savings'));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.widgetWithText(CupertinoTextField, 'Amount'),
-      '100',
-    );
+    await tester.enterText(find.byKey(const ValueKey('entry-Amount')), '100');
     await tester.ensureVisible(find.text('Save deposit'));
     await tester.tap(find.text('Save deposit'));
     await tester.pumpAndSettle();
     expect(find.text('A milestone worth celebrating'), findsOneWidget);
     expect(vm.goals.single.savedAmount, 300);
-    await tester.tap(find.text('Done'));
+    await tester.tap(find.text('Keep saving'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Record a withdrawal'));
-    await tester.tap(find.text('Record a withdrawal'));
+    await tester.ensureVisible(find.text('Withdrawal'));
+    await tester.tap(find.text('Withdrawal'));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.widgetWithText(CupertinoTextField, 'Amount'),
-      '500',
-    );
+    await tester.enterText(find.byKey(const ValueKey('entry-Amount')), '500');
     await tester.ensureVisible(find.text('Confirm withdrawal'));
     await tester.tap(find.text('Confirm withdrawal'));
     await tester.pumpAndSettle();
@@ -326,10 +571,7 @@ void main() {
       findsOneWidget,
     );
     expect(vm.goals.single.savedAmount, 300);
-    await tester.enterText(
-      find.widgetWithText(CupertinoTextField, 'Amount'),
-      '100',
-    );
+    await tester.enterText(find.byKey(const ValueKey('entry-Amount')), '100');
     await tester.ensureVisible(find.text('Confirm withdrawal'));
     await tester.tap(find.text('Confirm withdrawal'));
     await tester.pumpAndSettle();
@@ -345,9 +587,7 @@ void main() {
     await tester.tap(find.text('Dark'));
     await tester.pumpAndSettle();
     expect(
-      CupertinoTheme.of(
-        tester.element(find.byType(CupertinoTabBar)),
-      ).brightness,
+      CupertinoTheme.of(tester.element(find.byType(MainScreen))).brightness,
       Brightness.dark,
     );
     expect(tester.takeException(), isNull);
@@ -360,7 +600,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('اردو'));
     await tester.pumpAndSettle();
-    expect(find.text('سرگرمی'), findsOneWidget);
+    expect(find.bySemanticsLabel('سرگرمی'), findsOneWidget);
     await goTab(tester, CupertinoIcons.flag);
     expect(find.text('فعال'), findsOneWidget);
     expect(tester.takeException(), isNull);

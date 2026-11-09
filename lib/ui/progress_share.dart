@@ -101,9 +101,9 @@ class AchievementCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(30),
     ),
     child: DefaultTextStyle(
-      style: const TextStyle(fontFamily: 'SavingsSans', color: forest),
+      style: const TextStyle(fontFamily: 'Manrope', color: forest),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Text(
             'SAVINGS GOALS',
@@ -146,7 +146,7 @@ class AchievementCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'SaveGoals.site · 100% free',
+            'SaveGoals.site',
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
           ),
         ],
@@ -201,8 +201,7 @@ class _SproutPainter extends CustomPainter {
   @override
   void paint(Canvas c, Size s) {
     final paint = Paint()..isAntiAlias = true;
-    paint.color = const Color(0xFFBCEB91);
-    c.drawCircle(const Offset(65, 66), 60, paint);
+    paint.color = lime;
     final growth = progress.clamp(0.0, 1.0);
     paint
       ..color = forest
@@ -212,13 +211,13 @@ class _SproutPainter extends CustomPainter {
     c.drawLine(const Offset(65, 81), Offset(65, 47 - growth * 13), paint);
     paint
       ..style = PaintingStyle.fill
-      ..color = const Color(0xFF438A32);
+      ..color = lime;
     final left = Path()
       ..moveTo(65, 61)
       ..cubicTo(31, 65, 29, 38 - growth * 8, 34, 35 - growth * 8)
       ..cubicTo(56, 34, 66, 45, 65, 61);
     c.drawPath(left, paint);
-    paint.color = forest;
+    paint.color = lime;
     final right = Path()
       ..moveTo(65, 49)
       ..cubicTo(66, 23 - growth * 9, 90, 23 - growth * 9, 99, 26)
@@ -259,8 +258,8 @@ class MomentumHeader extends StatelessWidget {
     return Row(
       children: [
         SizedBox(
-          width: 92,
-          height: 104,
+          width: 66,
+          height: 76,
           child: FittedBox(child: SavingsSprout(progress: progress)),
         ),
         const SizedBox(width: 14),
@@ -268,7 +267,7 @@ class MomentumHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(t(c, 'Grow at your pace.'), style: headline(c, 20)),
+              Text(t(c, 'Grow at your pace.'), style: headline(c, 17)),
               const SizedBox(height: 5),
               Text(
                 insights.streak == 0
@@ -316,11 +315,6 @@ class MomentumHeader extends StatelessWidget {
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                t(c, 'Your last 7 saving days'),
-                style: TextStyle(color: muted(c), fontSize: 11),
               ),
             ],
           ),

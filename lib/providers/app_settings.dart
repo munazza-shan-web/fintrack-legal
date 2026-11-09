@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -7,14 +8,16 @@ class AppSettings extends ChangeNotifier {
   static const String _currencyKey = 'currency_code';
   static const String _languageKey = 'language_code';
   static const String _themeKey = 'theme_mode';
+  static const String _blackThemeKey = 'black_theme';
   static const String _privacyKey = 'hide_balances';
   static const String _reminderKey = 'reminders_enabled';
   static const String _reminderHourKey = 'reminder_hour';
   static const String _reminderMinuteKey = 'reminder_minute';
 
-  String _currencyCode = 'PKR';
+  String _currencyCode = 'USD';
   String _languageCode = 'en';
-  ThemeMode _themeMode = ThemeMode.light;
+  ThemeMode _themeMode = ThemeMode.dark;
+  bool _blackTheme = false;
   bool _hideBalances = false;
   bool _remindersEnabled = false;
   int _reminderHour = 20;
@@ -23,6 +26,12 @@ class AppSettings extends ChangeNotifier {
   String get currencyCode => _currencyCode;
   String get languageCode => _languageCode;
   ThemeMode get themeMode => _themeMode;
+  bool get blackTheme => _blackTheme;
+  String get appearanceLabel => _themeMode == ThemeMode.light
+      ? 'Light'
+      : _blackTheme
+      ? 'Black'
+      : 'Dark';
   bool get hideBalances => _hideBalances;
   bool get remindersEnabled => _remindersEnabled;
   int get reminderHour => _reminderHour;
@@ -50,11 +59,12 @@ class AppSettings extends ChangeNotifier {
   Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
 
-    _currencyCode = prefs.getString(_currencyKey) ?? 'PKR';
+    _currencyCode = prefs.getString(_currencyKey) ?? 'USD';
     _languageCode = prefs.getString(_languageKey) ?? 'en';
 
-    final savedTheme = prefs.getString(_themeKey) ?? 'light';
+    final savedTheme = prefs.getString(_themeKey) ?? 'dark';
     _themeMode = savedTheme == 'light' ? ThemeMode.light : ThemeMode.dark;
+    _blackTheme = prefs.getBool(_blackThemeKey) ?? false;
 
     _hideBalances = prefs.getBool(_privacyKey) ?? false;
     _remindersEnabled = prefs.getBool(_reminderKey) ?? false;
@@ -90,13 +100,25 @@ class AppSettings extends ChangeNotifier {
 
   Future<void> setTheme(ThemeMode mode) async {
     _themeMode = mode;
+    _blackTheme = false;
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_blackThemeKey, false);
     await prefs.setString(
       _themeKey,
       mode == ThemeMode.light ? 'light' : 'dark',
     );
+  }
+
+  Future<void> setAppearance(String appearance) async {
+    if (!['light', 'dark', 'black'].contains(appearance)) return;
+    _themeMode = appearance == 'light' ? ThemeMode.light : ThemeMode.dark;
+    _blackTheme = appearance == 'black';
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_themeKey, appearance == 'light' ? 'light' : 'dark');
+    await prefs.setBool(_blackThemeKey, _blackTheme);
   }
 
   Future<void> setHideBalances(bool value) async {
@@ -174,6 +196,6 @@ class AppSettings extends ChangeNotifier {
   String formatMoney(double amount) {
     if (_hideBalances) return '••••••';
 
-    return '$currencySymbol ${amount.toStringAsFixed(2)}';
+    return '$currencySymbol ${NumberFormat('#,##0.##').format(amount)}';
   }
 }

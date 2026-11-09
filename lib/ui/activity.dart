@@ -7,60 +7,65 @@ class TransactionTile extends StatelessWidget {
   Widget build(BuildContext c) {
     final goal = c.watch<GoalsViewModel>().getGoalById(transaction.goalId);
     final deposit = transaction.type == TransactionType.deposit;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Panel(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    final color = (goal?.id ?? 1).isOdd ? lilac : peach;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: muted(c).withValues(alpha: .15)),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              goal == null ? CupertinoIcons.flag : goalIcon(goal),
+              color: forest,
+              size: 21,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  deposit
-                      ? CupertinoIcons.arrow_down_left
-                      : CupertinoIcons.arrow_up_right,
-                  color: deposit
-                      ? accent.resolveFrom(c)
-                      : CupertinoColors.systemRed,
-                  size: 21,
+                Text(
+                  goal?.name ?? t(c, 'Deleted goal'),
+                  style: headline(c, 14),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    goal?.name ?? t(c, 'Deleted goal'),
-                    style: headline(c, 16),
+                const SizedBox(height: 4),
+                Text(
+                  '${t(c, deposit ? 'Deposit' : 'Withdraw')} · ${dateLabel(transaction.date)}',
+                  style: TextStyle(color: muted(c), fontSize: 11),
+                ),
+                if (transaction.note?.isNotEmpty ?? false)
+                  Text(
+                    transaction.note!,
+                    style: TextStyle(color: muted(c), fontSize: 11),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    '${deposit ? '+' : '−'} ${money(c, transaction.amount)}',
-                    textAlign: TextAlign.end,
-                    style: TextStyle(
-                      color: deposit
-                          ? accent.resolveFrom(c)
-                          : CupertinoColors.systemRed,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              '${t(c, deposit ? 'Deposit' : 'Withdraw')} · ${dateLabel(transaction.date)}',
-              style: TextStyle(color: muted(c), fontSize: 12),
-            ),
-            if (transaction.note?.isNotEmpty ?? false) ...[
-              const SizedBox(height: 6),
-              Text(
-                transaction.note!,
-                style: TextStyle(color: muted(c), fontSize: 13),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              '${deposit ? '+' : '−'} ${money(c, transaction.amount)}',
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                color: deposit ? accent.resolveFrom(c) : peach,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
               ),
-            ],
-          ],
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -89,46 +94,61 @@ class _ActivityPageState extends State<ActivityPage> {
       return matches && text.contains(query.trim().toLowerCase());
     }).toList();
     final deposits = vm.transactions
-        .where((tx) => tx.type == TransactionType.deposit)
+        .where(
+          (tx) =>
+              tx.type == TransactionType.deposit &&
+              tx.date.year == DateTime.now().year &&
+              tx.date.month == DateTime.now().month,
+        )
         .fold<double>(0, (a, tx) => a + tx.amount);
     final withdrawals = vm.transactions
-        .where((tx) => tx.type == TransactionType.withdrawal)
+        .where(
+          (tx) =>
+              tx.type == TransactionType.withdrawal &&
+              tx.date.year == DateTime.now().year &&
+              tx.date.month == DateTime.now().month,
+        )
         .fold<double>(0, (a, tx) => a + tx.amount);
     return PageShell(
-      title: 'Activity',
+      title: 'Your activity',
+      rootTab: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: _Metric(
-                  'Deposits',
-                  money(c, deposits),
-                  CupertinoIcons.arrow_down_left,
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: ActivitySummaryCard(
+                    key: const ValueKey('monthly-deposits'),
+                    label: 'Saved this month',
+                    value: money(c, deposits),
+                    icon: CupertinoIcons.arrow_down,
+                    color: accent.resolveFrom(c),
+                    onTap: () => setState(() => filter = 1),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _Metric(
-                  'Withdrawals',
-                  money(c, withdrawals),
-                  CupertinoIcons.arrow_up_right,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ActivitySummaryCard(
+                    key: const ValueKey('monthly-withdrawals'),
+                    label: 'Withdrawn this month',
+                    value: money(c, withdrawals),
+                    icon: CupertinoIcons.arrow_up,
+                    color: peach,
+                    onTap: () => setState(() => filter = 2),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const Section('Last 6 months'),
+          const SizedBox(height: 16),
           _SavingsChart(vm.transactions),
-          const Section('Transactions'),
-          CupertinoSearchTextField(
-            placeholder: t(c, 'Search goals or notes'),
-            onChanged: (value) => setState(() => query = value),
-          ),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            child: CupertinoSlidingSegmentedControl<int>(
+            child: SavingsSegments<int>(
               groupValue: filter,
               children: {
                 0: Text(t(c, 'All')),
@@ -139,6 +159,11 @@ class _ActivityPageState extends State<ActivityPage> {
             ),
           ),
           const SizedBox(height: 20),
+          CupertinoSearchTextField(
+            placeholder: t(c, 'Search goals or notes'),
+            onChanged: (value) => setState(() => query = value),
+          ),
+          const SizedBox(height: 16),
           const DataStatus(),
           ...transactions.map((tx) => TransactionTile(tx)),
           if (transactions.isEmpty && !vm.isLoading && vm.error == null)
