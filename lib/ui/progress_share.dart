@@ -30,7 +30,7 @@ class _ProgressSharePageState extends State<ProgressSharePage> {
           ],
           fileNameOverrides: ['savings-goals-progress.png'],
           text:
-              'Small steps. Real progress. Savings Goals · ${AppBrand.website}',
+              'Small steps. Real progress. Saving Goals · ${AppBrand.website}',
           sharePositionOrigin: box.localToGlobal(Offset.zero) & box.size,
         ),
       );
@@ -106,7 +106,7 @@ class AchievementCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Text(
-            'SAVINGS GOALS',
+            'SAVING GOALS',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w900,
@@ -146,7 +146,7 @@ class AchievementCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'SaveGoals.site',
+            'SavingsGoals.site',
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
           ),
         ],

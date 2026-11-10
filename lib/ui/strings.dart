@@ -109,7 +109,7 @@ const urduStrings = <String, String>{
   'Your privacy & routine': 'آپ کی رازداری اور معمول',
   'Daily reminder': 'روزانہ یاد دہانی',
   'Reminder time': 'یاد دہانی کا وقت',
-  'About Savings Goals': 'Savings Goals کے بارے میں',
+  'About Saving Goals': 'Saving Goals کے بارے میں',
   'Contact support': 'مدد کے لیے رابطہ',
   'Light': 'روشن',
   'Dark': 'تاریک',

@@ -166,7 +166,7 @@ class SettingsPage extends StatelessWidget {
               SettingsRow(
                 'Contact support',
                 CupertinoIcons.headphones,
-                onTap: () => openLink(c, 'mailto:jiyoo7480@gmail.com'),
+                onTap: () => openLink(c, 'mailto:${AppBrand.supportEmail}'),
               ),
             ],
           ),

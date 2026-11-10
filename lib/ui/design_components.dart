@@ -551,7 +551,7 @@ class HomeOverview extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: Text('Savings Goals', style: headline(c, 17)),
+                        child: Text('Saving Goals', style: headline(c, 17)),
                       ),
                       CupertinoButton(
                         padding: EdgeInsets.zero,

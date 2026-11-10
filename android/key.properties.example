@@ -1,0 +1,7 @@
+# Copy to android/key.properties only when configuring an existing upload key.
+# For a new key, run tools/setup_upload_key.ps1 instead.
+# Paths are relative to android/, or absolute paths using forward slashes.
+storeFile=C:/Users/YOUR_USER/.android-keystores/saving-goals-upload.jks
+storePassword=SET_YOUR_PRIVATE_PASSWORD
+keyAlias=upload
+keyPassword=SET_YOUR_PRIVATE_PASSWORD

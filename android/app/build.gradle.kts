@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -5,8 +8,32 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val signingPropertiesFile = rootProject.file("key.properties")
+val signingProperties = Properties()
+if (signingPropertiesFile.exists()) {
+    FileInputStream(signingPropertiesFile).use { signingProperties.load(it) }
+}
+val buildingRelease = gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }
+// Explicit preparation mode lets compilation finish before a private upload key is supplied.
+// Ordinary release builds always require the real upload keystore; there is no debug fallback.
+val preparingUnsignedRelease = providers.gradleProperty("prepareUnsignedRelease").orNull == "true" ||
+    providers.environmentVariable("SAVING_GOALS_PREPARE_UNSIGNED_RELEASE").orNull == "true"
+if (buildingRelease && !preparingUnsignedRelease) {
+    check(signingPropertiesFile.exists()) {
+        "Release signing is not configured. Create android/key.properties using tools/setup_upload_key.ps1."
+    }
+    listOf("storeFile", "storePassword", "keyAlias", "keyPassword").forEach { property ->
+        check(!signingProperties.getProperty(property).isNullOrBlank()) {
+            "Release signing property is missing: $property"
+        }
+    }
+    check(rootProject.file(signingProperties.getProperty("storeFile")).exists()) {
+        "The upload keystore configured in android/key.properties was not found."
+    }
+}
+
 android {
-    namespace = "com.example.fintrack"
+    namespace = "com.savings.goals.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -17,8 +44,7 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.fintrack"
+        applicationId = "com.savings.goals.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -31,11 +57,20 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            if (signingPropertiesFile.exists()) {
+                storeFile = rootProject.file(signingProperties.getProperty("storeFile"))
+                storePassword = signingProperties.getProperty("storePassword")
+                keyAlias = signingProperties.getProperty("keyAlias")
+                keyPassword = signingProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (preparingUnsignedRelease) null else signingConfigs.getByName("release")
         }
     }
 }

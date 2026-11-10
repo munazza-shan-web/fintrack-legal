@@ -410,7 +410,7 @@ void main() {
           tester.getTopLeft(find.text('Make progress, your way.')).dy,
           greaterThanOrEqualTo(44),
         );
-        expect(find.text('Savings Goals'), findsOneWidget);
+        expect(find.text('Saving Goals'), findsOneWidget);
         expect(find.byType(SavingsSprout), findsOneWidget);
         await goTab(tester, CupertinoIcons.flag);
         expect(find.byType(GoalTile), findsOneWidget);

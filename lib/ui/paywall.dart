@@ -29,7 +29,7 @@ class _PaywallPreviewState extends State<PaywallPreview> {
                   Row(
                     children: [
                       Expanded(
-                        child: Text('Savings Goals', style: headline(c, 19)),
+                        child: Text('Saving Goals', style: headline(c, 19)),
                       ),
                       CupertinoButton(
                         padding: EdgeInsets.zero,
@@ -101,7 +101,7 @@ class _PaywallPreviewState extends State<PaywallPreview> {
                     onPressed: () => alert(
                       c,
                       'Preview only',
-                      'Savings Goals is currently free. No trial or subscription has been started.',
+                      'Saving Goals is currently free. No trial or subscription has been started.',
                     ),
                   ),
                   const SizedBox(height: 10),
